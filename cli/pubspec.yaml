@@ -1,6 +1,7 @@
 name: cli
 description: A sample command-line application.
 version: 1.0.0
+publish_to: none
 # homepage: https://www.example.com
 
 environment:
@@ -10,6 +11,7 @@ dependencies:
   fauna_dart_driver:
     path: ../
   faunadb_http: ^0.13.4
+  args: ^2.3.1
 
 dev_dependencies:
   lints: ^2.0.0

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:faunadb_http/query.dart';
 
@@ -34,20 +35,16 @@ class FaunaStream {
   }
 
   Future<void> close() {
-    // _faunaClient.removeListener(_onStatusChange);
     _subscription?.cancel();
     return _streamController.close();
   }
 
   void start() async {
-    var res = await _faunaClient.query(Documents(Collection("users")));
+    var res = await _faunaClient.query(_expression);
 
-    _stream = await _connection.start();
-
-    // _subscription = _stream!.incomingMessages.listen((event) {
-    //   print(event);
-    //   _streamController.add(event);
-    // });
+    _subscription = (await _connection.start()).listen((event) {
+      _streamController.add(utf8.decode(event));
+    });
   }
 
   Stream get stream => _streamController.stream;

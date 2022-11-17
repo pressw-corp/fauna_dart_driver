@@ -23,7 +23,12 @@ void main(List<String> arguments) async {
 
   final client = FaunaClient(secret: parsedSecret);
 
-  final stream = client.stream(Documents(Collection('users')), {"document"});
+  final stream = client.stream(Ref(Collection('users'), ""), {});
+
+  stream.stream.listen((event) {
+    print('triggered');
+    print(event);
+  });
 
   stream.start();
 }

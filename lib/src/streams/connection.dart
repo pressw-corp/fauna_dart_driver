@@ -45,7 +45,7 @@ class Connection {
     _state = "closed";
   }
 
-  Future<Stream> start() async {
+  Future<Stream<List<int>>> start() async {
     if (_state != 'idle') {
       throw Exception("Connection is already started.");
     }
@@ -96,25 +96,11 @@ class Connection {
         request.headers[entry.key] = entry.value;
       }
 
-      // request.headers[':method'] = "POST";
-      // request.headers[':path'] = "/stream$urlParams";
-      // request.headers[":scheme"] = _faunaClient.uri.scheme;
-      // request.headers[":authority"] = _faunaClient.uri.host;
-
       StreamedResponse response = await client.send(
-        Request(
-          "POST",
-          Uri.https(_faunaClient.baseUrl, "/stream$urlParams"),
-        ),
+        request,
       );
 
-      print(response.statusCode);
-      print(response.reasonPhrase);
-
-      return response.stream.map((event) {
-        print(event);
-        return event;
-      });
+      return response.stream;
     } catch (e, stack) {
       print(e);
       print(stack);
