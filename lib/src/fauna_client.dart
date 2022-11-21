@@ -1,5 +1,8 @@
 import 'dart:convert';
 
+import 'package:fauna_dart_driver/fauna_dart_driver.dart';
+import 'package:fauna_dart_driver/src/models/document_snapshot.dart';
+import 'package:fauna_dart_driver/src/models/fauna_document.dart';
 import 'package:faunadb_http/query.dart';
 // import 'package:flutter/material.dart';
 import 'package:http/http.dart';
@@ -16,7 +19,7 @@ class FaunaClient {
   final String _domain;
   final String _scheme;
   late final int? _port;
-  late final String _authHeader;
+  late String _authHeader;
   final int _timeout;
   final int _connectionSize;
   final int _poolMaxSize;
@@ -137,7 +140,11 @@ class FaunaClient {
     }
   }
 
-  Future<Object?> query(Expr expression) {
+  void setSecret(String secret) {
+    _authHeader = "Bearer $_secret";
+  }
+
+  Future<FaunaDocument?> query(Expr expression) {
     return _execute(
       action: "POST",
       path: "",
@@ -146,7 +153,7 @@ class FaunaClient {
     );
   }
 
-  Future<Object?> _execute({
+  Future<FaunaDocument?> _execute({
     required String action,
     required String path,
     Expr? data,
@@ -193,7 +200,8 @@ class FaunaClient {
     }
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return FaunaDocument.fromFauna(
+          jsonDecode(response.body)["resource"] as Map<String, dynamic>);
     } else {
       throw Exception("Error: ${response.statusCode} ${response.body}");
     }
@@ -202,7 +210,18 @@ class FaunaClient {
     //     response_content = parse_json_or_none(response_raw)
   }
 
-  FaunaStream stream(Expr expression, Set<String> fields) {
+  FaunaDocumentStream<FaunaDocument?> docStream(
+    Expr expression,
+    Set<String>? fields,
+  ) {
+    return JsonFaunaDocumentStream(
+      client: this,
+      expression: expression,
+      fields: fields,
+    );
+  }
+
+  FaunaStream stream(Expr expression, Set<String>? fields) {
     return FaunaStream(
       client: this,
       expression: expression,
