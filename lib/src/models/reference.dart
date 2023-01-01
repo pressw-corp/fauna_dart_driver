@@ -1,3 +1,5 @@
+import 'package:faunadb_http/query.dart' as q;
+
 class Reference {
   final String id;
   final Reference? classRef;
@@ -7,15 +9,20 @@ class Reference {
     this.classRef,
   });
 
-  factory Reference.fromJson(Map<String, dynamic> json) {
+  factory Reference.fromJson(Map<dynamic, dynamic> json) {
     if (json.containsKey("@ref")) {
-      json = json["@ref"] as Map<String, dynamic>;
+      json = (json["@ref"] as Map).cast<String, dynamic>();
+    } else if (json.containsKey("value")) {
+      json = (json["value"] as Map).cast<String, dynamic>();
     }
 
     Reference? classRef;
 
     if (json.containsKey("class")) {
       classRef = Reference.fromJson(json["class"] as Map<String, dynamic>);
+    } else if (json.containsKey("collection")) {
+      classRef = Reference.fromJson(
+          (json["collection"] as Map).cast<String, dynamic>());
     }
 
     return Reference(
@@ -24,8 +31,8 @@ class Reference {
     );
   }
 
-  static Reference fromFaunaRef(Map<String, dynamic> json) {
-    return Reference.fromJson(json);
+  static Reference fromFaunaRef(Map<dynamic, dynamic> json) {
+    return Reference.fromJson(json.cast<String, dynamic>());
   }
 
   static Map<String, dynamic> toFaunaRef(Reference ref) {
@@ -39,5 +46,14 @@ class Reference {
         'class': classRef?.toJson(),
       },
     };
+  }
+
+  q.Expr toExpr() {
+    if (classRef != null) {
+      return q.Ref(q.Collection(classRef!.id), id);
+    } else {
+      // TODO: This is incorrect
+      return q.Ref(q.Collection(id), id);
+    }
   }
 }

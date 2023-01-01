@@ -6,11 +6,10 @@ part of 'fauna_document.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-FaunaDocument _$FaunaDocumentFromJson(Map<String, dynamic> json) =>
-    FaunaDocument(
-      ref: Reference.fromFaunaRef(json['ref'] as Map<String, dynamic>),
+FaunaDocument _$FaunaDocumentFromJson(Map json) => FaunaDocument(
+      ref: Reference.fromFaunaRef(json['ref'] as Map),
       timestamp: FaunaDocument._timestampFromJson(json['ts']),
-      data: json['data'] as Map<String, dynamic>,
+      data: Map<String, dynamic>.from(json['data'] as Map),
     );
 
 Map<String, dynamic> _$FaunaDocumentToJson(FaunaDocument instance) =>

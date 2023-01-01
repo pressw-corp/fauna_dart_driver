@@ -7,12 +7,13 @@ import '../fauna_client.dart';
 import '../streams/connection.dart';
 
 class FaunaStream {
-  final StreamController _streamController = StreamController.broadcast();
+  final StreamController<dynamic> _streamController =
+      StreamController.broadcast();
   final FaunaClient _faunaClient;
   final Expr _expression;
   Connection _connection;
-  Stream? _stream;
-  StreamSubscription? _subscription;
+  Stream<dynamic>? _stream;
+  StreamSubscription<dynamic>? _subscription;
 
   FaunaStream({
     required FaunaClient client,
@@ -40,7 +41,7 @@ class FaunaStream {
   }
 
   void start() async {
-    var res = await _faunaClient.query(_expression);
+    var res = await _faunaClient.docQuery(_expression);
 
     _subscription = (await _connection.start()).listen((event) {
       _streamController.add(utf8.decode(event));

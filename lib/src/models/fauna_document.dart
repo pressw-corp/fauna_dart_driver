@@ -6,7 +6,7 @@ import 'reference.dart';
 
 part 'fauna_document.g.dart';
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class FaunaDocument extends Equatable {
   @override
   List<Object?> get props => [ref.id, timestamp];
@@ -50,6 +50,8 @@ class FaunaDocument extends Equatable {
       return DateTime.parse(timestamp);
     } else if (timestamp is DateTime) {
       return timestamp.toLocal();
+    } else if (timestamp is Map) {
+      return DateTime.parse(timestamp["value"] as String);
     } else {
       throw ArgumentError.value(timestamp, 'timestamp');
     }

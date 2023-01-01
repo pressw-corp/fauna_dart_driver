@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fauna_dart_driver/fauna_dart_driver.dart';
 import 'package:fauna_dart_driver/src/models/document_snapshot.dart';
 import 'package:fauna_dart_driver/src/models/fauna_document.dart';
+import 'package:fauna_dart_driver/src/models/fauna_set_stream.dart';
 import 'package:faunadb_http/query.dart';
 // import 'package:flutter/material.dart';
 import 'package:http/http.dart';
@@ -79,6 +80,8 @@ class FaunaClient {
       'User-Agent': 'dart-http2/2.12.0',
     };
 
+    print(_secret);
+
     _authHeader = "Bearer $_secret";
     String constructedUrl = "$_scheme://$_domain:$_port";
 
@@ -144,18 +147,35 @@ class FaunaClient {
     _authHeader = "Bearer $_secret";
   }
 
-  Future<FaunaDocument?> query(Expr expression) {
+  Future<FaunaDocument?> docQuery(Expr expression) {
     return _execute(
       action: "POST",
       path: "",
       data: expression,
       withTransactionTime: true,
+      transformer: (data) {
+        return FaunaDocument.fromFauna(
+            data["resource"] as Map<String, dynamic>);
+      },
     );
   }
 
-  Future<FaunaDocument?> _execute({
+  Future<Object?> query(Expr expression) {
+    return _execute(
+      action: "POST",
+      path: "",
+      data: expression,
+      withTransactionTime: false,
+      transformer: (data) {
+        return data["resource"] as Object?;
+      },
+    );
+  }
+
+  Future<T?> _execute<T>({
     required String action,
     required String path,
+    required T? Function(Map<String, dynamic> data) transformer,
     Expr? data,
     Map<String, String?>? query,
     int? queryTimeoutMs,
@@ -174,6 +194,7 @@ class FaunaClient {
     }
 
     Map<String, String> headers = {};
+    headers.addAll(baseHeaders);
     if (withTransactionTime) {
       headers.addAll(await _lastTransactionTime.requestHeader());
     }
@@ -200,10 +221,19 @@ class FaunaClient {
     }
 
     if (response.statusCode == 200) {
-      return FaunaDocument.fromFauna(
-          jsonDecode(response.body)["resource"] as Map<String, dynamic>);
+      return transformer(jsonDecode(response.body) as Map<String, dynamic>);
+    } else if (response.statusCode == 404) {
+      return null;
     } else {
-      throw Exception("Error: ${response.statusCode} ${response.body}");
+      if (response.statusCode == 401) {
+        throw AuthorizationException(
+          "Unauthorized",
+          response.statusCode,
+          jsonDecode(response.body),
+        );
+      } else {
+        throw Exception("Error: ${response.statusCode} ${response.body}");
+      }
     }
 
     //  String response_raw = response.
@@ -215,6 +245,17 @@ class FaunaClient {
     Set<String>? fields,
   ) {
     return JsonFaunaDocumentStream(
+      client: this,
+      expression: expression,
+      fields: fields,
+    );
+  }
+
+  FaunaSetStream<FaunaDocument> setStream(
+    Expr expression,
+    Set<String>? fields,
+  ) {
+    return JsonFaunaSetStream(
       client: this,
       expression: expression,
       fields: fields,
@@ -323,4 +364,12 @@ class _LastTxnTime {
       }
     });
   }
+}
+
+class AuthorizationException {
+  final String message;
+  final Map<String, dynamic> body;
+  final int statusCode;
+
+  AuthorizationException(this.message, this.statusCode, this.body);
 }

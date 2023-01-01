@@ -65,7 +65,7 @@ class JsonFaunaDocumentStream extends FaunaDocumentStream<FaunaDocument?> {
       );
     }
 
-    var res = await _faunaClient.query(Get(_expression));
+    var res = await _faunaClient.docQuery(Get(_expression));
 
     if (res == null) {
       _streamController.addError(new Exception("No document found"));
@@ -168,7 +168,7 @@ class _FaunaDocumentStreamWithConverter<T extends Object?>
       );
     }
 
-    var res = await _faunaClient.query(Get(_expression));
+    var res = await _faunaClient.docQuery(Get(_expression));
 
     if (res == null) {
       _streamController.addError(new Exception("No document found"));
@@ -195,6 +195,10 @@ class _FaunaDocumentStreamWithConverter<T extends Object?>
       _streamController.addError(e, stack);
       _streamController.close();
       rethrow;
+    }
+
+    if (_streamController.isClosed) {
+      return;
     }
 
     _streamController.add(snapshot);
