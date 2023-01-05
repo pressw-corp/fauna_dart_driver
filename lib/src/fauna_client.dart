@@ -16,10 +16,10 @@ import 'models/fauna_stream.dart';
 class FaunaClient {
   late final String _baseUrl;
 
-  final String _secret;
   final String _domain;
   final String _scheme;
   late final int? _port;
+  String _secret;
   late String _authHeader;
   final int _timeout;
   final int _connectionSize;
@@ -79,8 +79,6 @@ class FaunaClient {
       'Accept': '*/*',
       'User-Agent': 'dart-http2/2.12.0',
     };
-
-    print(_secret);
 
     _authHeader = "Bearer $_secret";
     String constructedUrl = "$_scheme://$_domain:$_port";
@@ -144,7 +142,8 @@ class FaunaClient {
   }
 
   void setSecret(String secret) {
-    _authHeader = "Bearer $_secret";
+    this._authHeader = "Bearer $_secret";
+    this._secret = secret;
   }
 
   Future<FaunaDocument?> docQuery(Expr expression) {
@@ -220,7 +219,7 @@ class FaunaClient {
       }
     }
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return transformer(jsonDecode(response.body) as Map<String, dynamic>);
     } else if (response.statusCode == 404) {
       return null;
