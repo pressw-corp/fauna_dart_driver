@@ -68,16 +68,15 @@ class FaunaClient {
     _port = port ?? (scheme == "https" ? 443 : 80);
 
     baseHeaders = {
-      "Keep-Alive": "timeout=5",
-      "Accept-Encoding": "gzip",
+      if (kSupportsHttp2) "Keep-Alive": "timeout=5",
+      if (kSupportsHttp2) "Accept-Encoding": "gzip",
       "Content-Type": "application/json;charset=utf-8",
       "X-Fauna-Driver": "dart",
       "X-FaunaDB-API-Version": "4",
-      "Content-type": "application/json; charset=utf-8",
       'X-Driver-Env': 'driver=dart; runtime=dart env=unknown; os=unknown',
-      'Connection': 'keep-alive',
-      'Accept': '*/*',
-      'User-Agent': 'dart-http2/2.12.0',
+      if (kSupportsHttp2) 'Connection': 'keep-alive',
+      if (kSupportsHttp2) 'Accept': '*/*',
+      if (kSupportsHttp2) 'User-Agent': 'dart-http2/2.12.0',
     };
 
     _authHeader = "Bearer $_secret";
@@ -228,7 +227,7 @@ class FaunaClient {
         throw AuthorizationException(
           "Unauthorized",
           response.statusCode,
-          jsonDecode(response.body),
+          (jsonDecode(response.body) as Map).cast(),
         );
       } else {
         throw Exception("Error: ${response.statusCode} ${response.body}");
