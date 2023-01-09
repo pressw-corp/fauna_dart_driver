@@ -8,13 +8,23 @@ import 'package:faunadb_http/query.dart';
 // import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'dart:io';
+import 'package:logger/logger.dart';
 
 import 'package:synchronized/synchronized.dart';
 
 import 'models/fauna_stream.dart';
 
 class FaunaClient {
+  static const _kMetricsHeaders = [
+    'x-compute-ops',
+    'x-byte-read-ops',
+    'x-byte-write-ops',
+    'x-query-time',
+    'x-txn-retries',
+  ];
+
   late final String _baseUrl;
+  final Logger _logger;
 
   final String _domain;
   final String _scheme;
@@ -32,7 +42,7 @@ class FaunaClient {
   late final Map<String, String> baseHeaders;
   late final Uri uri;
 
-  String get baseUrl => "$_domain";
+  String get baseUrl => _domain;
   int? get port => _port;
   int? get queryTimeoutMs => _queryTimeoutMs;
   bool _isClosed = false;
@@ -55,13 +65,24 @@ class FaunaClient {
     _LastTxnTime? lastTransactionTime,
     int? queryTimeoutMs,
     _Counter? counter,
+    Level? logLevel,
   })  : _secret = secret,
         _domain = domain,
         _scheme = scheme,
         _timeout = timeout,
         _connectionSize = poolConnections,
         _poolMaxSize = poolMaxsize,
-        _endpoint = endpoint {
+        _endpoint = endpoint,
+        _logger = Logger(
+          printer: PrettyPrinter(
+            errorMethodCount: 8,
+            lineLength: 120,
+            colors: true,
+            printEmojis: true,
+            printTime: true,
+          ),
+          level: logLevel ?? Level.warning,
+        ) {
     _lastTransactionTime =
         lastTransactionTime ?? _LastTxnTime.create(value: null);
     _queryTimeoutMs = queryTimeoutMs;
@@ -219,11 +240,25 @@ class FaunaClient {
     }
 
     if (response.statusCode == 200 || response.statusCode == 201) {
+      Map<String, String> metrics = {};
+
+      for (String metric in _kMetricsHeaders) {
+        if (response.headers.containsKey(metric)) {
+          metrics[metric] = response.headers[metric]!;
+        }
+      }
+
+      if (metrics.isNotEmpty) {
+        _logger.d("Fauna Metrics");
+        _logger.d(metrics);
+      }
+
       return transformer(jsonDecode(response.body) as Map<String, dynamic>);
     } else if (response.statusCode == 404) {
       return null;
     } else {
       if (response.statusCode == 401) {
+        _logger.w("Unauthorized access of Fauna");
         throw AuthorizationException(
           "Unauthorized",
           response.statusCode,
@@ -280,6 +315,9 @@ class FaunaClient {
     if (data != null) {
       encoded = jsonEncode(data.toJson());
     }
+
+    _logger.v("Performing $action request to $uri");
+    _logger.v(data?.toJson());
 
     if (action == "POST") {
       return _client
