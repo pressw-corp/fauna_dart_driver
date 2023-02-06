@@ -1,5 +1,5 @@
 name: fauna_dart_driver
-description: A new Flutter package project.
+description: A dart implementation of the faunaDB (fauna.com) driver that supports streaming
 version: 0.0.1
 homepage: https://github.com/pressw-corp/offline-frontend
 
