@@ -16,4 +16,10 @@ WIP: Streaming driver for Fauna written in Dart. Can be used in Flutter or pure 
 ## Features
 
 -   Query based operations
--   WIP: Streaming
+-   Basic streaming operations
+
+## WIP
+
+-   Removing items from a set stream
+-   Updating items in a set stream
+-   Web streams, currently it runs a query once and then returns the results. This is not a streaming operation. There are ways to do this with the JS library that Fauna provides out, but the platform channel needs to be setup and the JS library needs to be imported. This is a WIP.
