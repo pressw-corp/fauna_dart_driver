@@ -2,16 +2,21 @@ name: fauna_dart_driver
 description: A dart implementation of the faunaDB (fauna.com) driver that supports streaming
 version: 0.0.1
 homepage: https://github.com/pressw-corp/offline-frontend
+publish_to: none
 
 environment:
-  sdk: ">=2.18.4 <3.0.0"
+  sdk: ">=3.2.0 <4.0.0"
 
 dependencies:
   http2: ^2.0.1
   universal_html: ^2.0.8
   synchronized: ^3.0.0+3
-  faunadb_http: ^0.13.4
-  http: ^0.13.5
+  faunadb_http:
+    git:
+      url: git@github.com:pressw-llc/faunadb-http-dart.git
+      ref: master
+
+  http: ^1.2.0
   json_serializable: ^6.5.4
   json_annotation: ^4.7.0
   equatable: ^2.0.5

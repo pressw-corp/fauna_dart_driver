@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:faunadb_http/query.dart';
 import 'package:http/http.dart';
-import "package:http2/http2.dart";
 
 import '../fauna_client.dart';
 
